@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { useRef } from 'react';
+import Page from './page';
 
 function Header({title}){
   return <h1>Develop. Preview Ship {title}</h1>;
@@ -22,6 +23,7 @@ export default function Home() {
    <div>
     <Header title="React"/>
     <Counter/>
+    <Page/>
    </div>
   )
 }
