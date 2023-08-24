@@ -12,12 +12,12 @@ export default function Page(){
             </Section>
         </Section>
         */
-
+    /** With context*/
     <Section level={1}>
         <Heading>Title</Heading>
         <Section level={6}>
-            <Heading>Sub Heading</Heading>
-            <Heading>Sub sub Heading</Heading>
+            <Heading>App Studio</Heading>
+            <Heading>App Studio</Heading>
         </Section>
     </Section>
     )

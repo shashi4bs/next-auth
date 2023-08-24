@@ -1,29 +1,33 @@
+import { useState } from 'react';
+import Link from 'next/link';
 import Head from 'next/head';
-import styles from '../styles/Home.module.css';
-import { useRef } from 'react';
-import Page from './page';
 
-function Header({title}){
-  return <h1>Develop. Preview Ship {title}</h1>;
+function Header({ title }) {
+  return <h1>{title ? title : 'Default title'}</h1>;
 }
-function Counter(){
-  let ref = useRef(0);
-  let handleClick = () =>{
-    ref.current = ref.current + 1;
-    alert('You Clicked '+ ref.current + ' times')
+
+export default function HomePage() {
+  const names = ['Ada Lovelace', 'Grace Hopper', 'Margaret Hamilton'];
+
+  const [likes, setLikes] = useState(0);
+
+  function handleClick() {
+    setLikes(likes + 1);
   }
-  return (<div>
-  <button onClick={handleClick}>Click Me!</button>
-        <br/> <div>clicked {ref.current} times</div>
-        </div>
-  )
-}
-export default function Home() {
+
   return (
-   <div>
-    <Header title="React"/>
-    <Counter/>
-    <Page/>
-   </div>
-  )
+    <>
+      <Header title="Develop. Preview. Ship. 🚀" />
+      <ul>
+        {names.map((name) => (
+          <li key={name}>{name}</li>
+        ))}
+      </ul>
+
+      <button onClick={handleClick}>Like ({likes})</button>
+      <h1 className='title'>
+          Read <Link href="posts/first-post">this page!</Link>
+      </h1>
+    </>
+  );
 }
