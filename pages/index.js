@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
+import Navbar from './navbar';
+
+require("dotenv").config()
 
 function Header({ title }) {
   return <h1>{title ? title : 'Default title'}</h1>;
@@ -17,6 +20,7 @@ export default function HomePage() {
 
   return (
     <>
+      <Navbar></Navbar>
       <Header title="Develop. Preview. Ship. 🚀" />
       <ul>
         {names.map((name) => (
@@ -26,7 +30,7 @@ export default function HomePage() {
 
       <button onClick={handleClick}>Like ({likes})</button>
       <h1 className='title'>
-          Read <Link href="posts/first-post">this page!</Link>
+          Read <Link href="posts/firslogin-post">this page!</Link>
       </h1>
     </>
   );
