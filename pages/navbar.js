@@ -6,27 +6,52 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
 
 export default function Navbar(){
-    return (
-        <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-          >
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          <Link href="/">Blogs</Link>
-          </Typography>
-          <Link href="/login"><Button color="inherit">Login</Button>
-          </Link>
-        </Toolbar>
-      </AppBar>
-    </Box>
-    );
+    const {data: session} = useSession();
+    if(session){
+        return (
+            <Box sx={{ flexGrow: 1 }}>
+        <AppBar position="static">
+            <Toolbar>
+            <IconButton
+                size="large"
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                sx={{ mr: 2 }}
+            >
+            </IconButton>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            <Link href="/">Blogs</Link>
+            </Typography>
+            <Button onClick={signOut()} color="inherit">SignOut</Button>
+            </Toolbar>
+        </AppBar>
+        </Box>
+        );
+    }else{
+        return (
+            <Box sx={{ flexGrow: 1 }}>
+        <AppBar position="static">
+            <Toolbar>
+            <IconButton
+                size="large"
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                sx={{ mr: 2 }}
+            >
+            </IconButton>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            <Link href="/">Blogs</Link>
+            </Typography>
+            <Link href="/login"><Button color="inherit">Login</Button>
+            </Link>
+            </Toolbar>
+        </AppBar>
+        </Box>
+        );
+    }
 }

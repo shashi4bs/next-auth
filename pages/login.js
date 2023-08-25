@@ -12,6 +12,8 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Navbar from './navbar';
+import { signIn } from 'next-auth/react';
+
 
 function Copyright(props) {
   return (
@@ -102,6 +104,11 @@ export default function SignIn() {
                   {"Don't have an account? Sign Up"}
                 </Link>
               </Grid>
+            </Grid>
+            <Grid item>
+                <Button onClick={signIn}>
+                    {"SSO Login"}
+                </Button>
             </Grid>
           </Box>
         </Box>

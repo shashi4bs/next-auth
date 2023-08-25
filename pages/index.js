@@ -3,6 +3,8 @@ import Link from 'next/link';
 import Head from 'next/head';
 import Navbar from './navbar';
 
+require("dotenv").config()
+
 function Header({ title }) {
   return <h1>{title ? title : 'Default title'}</h1>;
 }
