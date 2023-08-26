@@ -6,11 +6,11 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 
 export default function Navbar(){
-    const {data: session} = useSession();
-    if(session){
+    const {session, status} = useSession();
+    if(status === "authenticated"){
         return (
             <Box sx={{ flexGrow: 1 }}>
         <AppBar position="static">
@@ -26,7 +26,10 @@ export default function Navbar(){
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             <Link href="/">Blogs</Link>
             </Typography>
-            <Button onClick={signOut()} color="inherit">SignOut</Button>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            {status}
+            </Typography>
+            <Button onClick={()=>signOut()} color="inherit">SignOut</Button>
             </Toolbar>
         </AppBar>
         </Box>
@@ -46,6 +49,9 @@ export default function Navbar(){
             </IconButton>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             <Link href="/">Blogs</Link>
+            </Typography>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            {status}
             </Typography>
             <Link href="/login"><Button color="inherit">Login</Button>
             </Link>
