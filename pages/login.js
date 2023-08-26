@@ -106,7 +106,7 @@ export default function SignIn() {
               </Grid>
             </Grid>
             <Grid item>
-                <Button onClick={signIn}>
+                <Button onClick={()=>signIn(undefined, {callbackUrl:'/'})}>
                     {"SSO Login"}
                 </Button>
             </Grid>
