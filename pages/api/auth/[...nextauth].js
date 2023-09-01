@@ -1,5 +1,7 @@
 import NextAuth from "next-auth"
 import GithubProvider from "next-auth/providers/github"
+import {MongoDBAdapter} from "@auth/mongodb-adapter"
+import connection from "../../../database/mongoClient";
 
 export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -17,10 +19,13 @@ export const authOptions = {
       return token;
     },
     async session({session, token, user}){
-      session.accessToken = token.accessToken
+      console.log(session);      
+      console.log(token);
+      console.log(user);
       return session;
     }
-  }
+  },
+  adapter: MongoDBAdapter(connection)
 }
 
 export default NextAuth(authOptions)

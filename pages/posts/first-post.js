@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Layout from "../../components/layout";
+import { Link } from "@mui/material";
 
 export default function FirstPost(){
     return <Layout>
@@ -10,5 +11,6 @@ export default function FirstPost(){
             width={144}
             height={144}
         />
+        <Link href="books">Add Books</Link>
     </Layout>
 }
