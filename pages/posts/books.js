@@ -1,17 +1,18 @@
 import { useEffect } from "react"
-import aws from "aws-sdk";
 import { Entity } from 'electrodb';
+import aws from "aws-sdk";
+
 
 // aws.config.loadFromPath('/Users/shashikumar/Projects/next-auth/awsconfig.json')
 aws.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY,
     secretAccessKey: process.env.AWS_SECRET_KEY
-}); 
+  }); 
 
 const client = new aws.DynamoDB.DocumentClient({region:"us-east-1"});
 
 // highlight-next-line
-const table = 'electro';
+const table = 'next-auth';
 
 const Book = new Entity({
   model: {
@@ -20,7 +21,7 @@ const Book = new Entity({
     service: 'store'
   },
   attributes: {
-    storeId: {
+    id: {
       type: 'string',
     },
     bookId: {
@@ -53,7 +54,7 @@ const Book = new Entity({
       pk: {
         // highlight-next-line
         field: 'pk',
-        composite: ['storeId']
+        composite: ['id']
       },
       sk: {
         // highlight-next-line
@@ -91,16 +92,21 @@ var params = {
   
 export default function Books(){
     useEffect(()=>{
-        Book.create({
-            bookId: 'beedabe8-e34e-4d41-9272-0755be9a2a6f',
-            storeId: 'pdx-45',
-            author: 'Stephen King',
-            title: 'IT',
-            condition: 'GOOD',
-            price: 15,
-            genre: ['HORROR', 'THRILLER'],
-            published: '1986-09-15',
-          }).go();
+        // Book.create({
+        //     bookId: 'beedabe8-e34e-4d41-9272-0755be9a2a9f',
+        //     id: 'pdx-46',
+        //     author: 'Stephen King',
+        //     title: 'IT',
+        //     condition: 'GOOD',
+        //     price: 15,
+        //     genre: ['HORROR', 'THRILLER'],
+        //     published: '1986-09-15',
+        //   }).go();
+        // const book = Book.query.byLocation({
+        //     id: 'pdx-45',
+        //     bookId: 'beedabe8-e34e-4d41-9272-0755be9a2a9f'
+        // }).go();
+        // console.log(book);
     }, []);
     return <>
         <h2>This is a book store</h2>
