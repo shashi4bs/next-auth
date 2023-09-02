@@ -1,7 +1,17 @@
 import NextAuth from "next-auth"
 import GithubProvider from "next-auth/providers/github"
-import {MongoDBAdapter} from "@auth/mongodb-adapter"
+import {MongoDBAdapter} from "@auth/mongodb-adapter";
+import {ElectroDBAdapter} from "../../../database/electroDBClient";
 import connection from "../../../database/mongoClient";
+import aws from "aws-sdk";
+
+aws.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY,
+  secretAccessKey: process.env.AWS_SECRET_KEY
+}); 
+
+const client = new aws.DynamoDB.DocumentClient({region:"us-east-1"});
+
 
 export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -25,7 +35,7 @@ export const authOptions = {
       return session;
     }
   },
-  adapter: MongoDBAdapter(connection)
+  adapter: ElectroDBAdapter(client)
 }
 
 export default NextAuth(authOptions)
