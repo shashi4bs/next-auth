@@ -60,21 +60,16 @@ export function ElectroDBAdapter(
   const GSI1PK = options?.indexPartitionKey ?? "GSI1PK";
   const GSI1SK = options?.indexSortKey ?? "GSI1SK";
   console.log("ElectroDBAdapter called!");
-  const AuthUser = new Entity({
+
+  const User = new Entity({
     model: {
-      entity: "user",
-      version: '1',
-      service: "auth-electro"
+      service: "USER",
+      entity: "USER",
+      version: "1"
     },
-    attributes:{
-      [pk]:{
-        type: "string"
-      },
-      [sk]:{
-        type: "string"
-      },
+    attributes: {
       id: {
-        type: "string"
+        type:"string"
       },
       email: {
         type: "string"
@@ -83,15 +78,158 @@ export function ElectroDBAdapter(
         type: "string"
       }
     },
-    indexes:{
-      byId: {
+    indexes: {
+      byUser:{
         pk: {
-          field: 'pk1',
-          composite: ['pk']
+          field: "pk",
+          composite: ["id"]
+        },
+        sk: {
+            field: "sk",
+            composite: ["id"]
+        }
+      },
+      byEmail:{
+        index: "gsi1pk-gsi1sk-index",
+        pk: {
+            field: "gsi1pk",
+            composite: ["email"]
+        },
+        sk: {
+            field: "gsi1sk",
+            composite: ["email"]
         }
       }
     }
   }, {client, table});
+
+  const Session = new Entity({
+    model:{
+      service: "USER",
+      entity: "SESSION",
+      version: "1"
+    },
+    attributes:{
+      id: {
+        type: "string"
+      },
+      sessionToken: {
+        type: "string"
+      },
+      userId: {
+        type: "string"
+      },
+      type: {
+        type: "string"
+      },
+      expires: {
+        type: "string"
+      }
+    },
+    indexes:{
+      byToken: {
+        pk:{
+          field: "pk",
+          composite: ["userId"]
+        },
+        sk: {
+          field: "sk",
+          composite: ["sessionToken"]
+        }
+      },
+      bySession:{
+        index: "gsi1pk-gsi1sk-index",
+        pk: {
+            field: "gsi1pk",
+            composite: ["sessionToken"]
+        },
+        sk: {
+            field: "gsi1sk",
+            composite: ["sessionToken"]
+        }
+      }
+    }
+  }, {client, table});
+
+  const Account = new Entity({
+    model: {
+      service: "USER", 
+      entity: "ACCOUNT",
+      version: "1"
+    },
+    attributes:{
+      id: {
+        type: "string"
+      },
+      provider: {
+        type: "string"
+      },
+      providerAccountId: {
+        type: "string"
+      },
+      type:{
+        type: "string"
+      },
+      userId: {
+        type: "string"
+      }
+    }, 
+    indexes: {
+      byAccount: {
+        pk: {
+          field: "pk",
+          composite: ["userId"]
+        },
+        sk: {
+          field: "sk",
+          composite: ["provider", "providerAccountId"]
+        }
+      },
+      byProvider: {
+        index: "gsi1pk-gsi1sk-index",
+        pk: {
+            field: "gsi1pk",
+            composite: ["provider"]
+        },
+        sk: {
+            field: "gsi1sk",
+            composite: ["providerAccountId"]
+        }
+      }
+    }
+  }, {client, table});
+
+  const VerificationToken = new Entity({
+    model: {
+      service: "VT", 
+      entity: "VT",
+      version: "1"
+    },
+    attributes:{
+      identifier: {
+        type: "string"
+      },
+      token: {
+        type: "string"
+      },
+      type: {
+        type: "string"
+      }
+    }, 
+    indexes: {
+      byIdentifier: {
+        pk: {
+          field: "pk",
+          composite: ["identifier"]
+        },
+        sk: {
+          field: "sk",
+          composite: ["token"]
+        }
+      }
+    }
+  }, {client, table});
+
 
   return {
     async createUser(data) {
@@ -109,115 +247,108 @@ export function ElectroDBAdapter(
         user['emailVerified'] = user[emailVerified].toISOString();
       else
         user['emailVerified'] = "null";
-      console.log({
-        ...user,
-        [pk]: `USER#${user.id}`,
-        [sk]: `USER#${user.id}`,
-        type: "USER",
-        [GSI1PK]: `USER#${user.email}`,
-        [GSI1SK]: `USER#${user.email}`,
-      });
-      await AuthUser.put({
-        ...user,
-        [pk]: `USER#${user.id}`,
-        [sk]: `USER#${user.id}`,
-        type: "USER",
-        [GSI1PK]: `USER#${user.email}`,
-        [GSI1SK]: `USER#${user.email}`,
-      }).go();
+      console.log(user);
+      await User.create(user).go();
       console.log("user created ", user);
       return user;
     },
 
     async getUser(userId) {
       console.log("Inside getUser");
-      const data = await AuthUser.get({
-        [pk]: `USER#${userId}`,
-        [sk]: `USER#${userId}`
+      const data = await User.get({
+        id: userId
       }).go();
-      return data;
+      return data['data'];
     },
     async getUserByEmail(email){
       console.log("Inside getUser by email");
-      const data = await AuthUser.find({
-        GSI1PK: `USER#${email}`
+      let data = await User.find({
+        email: email
       }).go();
+      data = data['data']
       console.log("read data: ", data);
       if(!data.length) return null;
-      return data;
+      return data[0];
     },
     async getUserByAccount({provider, providerAccountId}) {
       console.log("Inside getUserByAccount");
       
-      const data = await AuthUser.find({
-        GSI1PK: `ACCOUNT#${provider}`,
-        GSI1SK: `ACCOUNT#${providerAccountId}`
+      let data = await Account.find({
+        provider: provider,
+        providerAccountId: providerAccountId
       }).go();
-      console.log("received data: ", data);
+      data = data['data']
+      console.log(data);
       if(!data.length) return null;
       const account = data[0];
-      const res = AuthUser.get({
-        pk: `USER#${account.userId}`,
-        sk: `USER#${account.userId}`
+      const res = await User.get({
+        id: account.userId
       }).go();
-      return res;
+      if(!res.data.length) return null;
+      return res.data[0];
     },
     async updateUser(user){
       console.log("Inside updateUser");
-      return await AuthUser.update({
-        [pk]: `USER#${user.id}`,
-        [sk]: `USER#${user.id}`
+      return await User.update({
+        id: user.id
       }).set(...user)
       .go();
     },
     async deleteUser(userId){
       console.log("Inside deleteUser");
-      const res = await AuthUser.delete({
+      const res = await User.delete({
         id: userId
       }).go();
+      await Account.delete({
+        id: userId
+      }).go();
+      await Session.delete({
+        id: userId
+      }).go()
       return res;
     },
     async linkAccount(data){
       console.log("Inside linkAccount");
-      const res = await AuthUser.create({
+      console.log(data);
+      const res = await Account.create({
         ...data,
-        id: crypto.randomUUID(),
-        [pk]: `USER#${data.userId}`,
-        [sk]: `ACCOUNT#${data.provider}#${data.providerAccountId}`,
-        [GSI1PK] : `ACCOUNT#${data.provider}`,
-        [GSI1SK] : `ACCOUNT#${data.providerAccountId}`
+        id: crypto.randomUUID()
       }).go();
-      return res;
+      return res['data'];
     },
     async unlinkAccount({provider, providerAccountId}) {
       console.log("Inside unlink Account");
-      const data = await AuthUser.get({
-        GSI1PK: `ACCOUNT#${provider}`,
-        GSI1SK: `ACCOUNT#${providerAccountId}`
+      let data = await Account.find({
+        provider: provider,
+        providerAccountId: providerAccountId
       }).go();
+      data = data['data'];
       const account = data[0];
-      await AuthUser.delete({
-        [pk]: `USER#${account.userId}`,
-        [sk]: `ACCOUNT#${provider}#${providerAccountId}`
+      await Account.delete({
+        userId: account.userId,
+        provider: provider,
+        providerAccountId: providerAccountId
       }).go();
       return account;
     },
     async getSessionAndUser(sessionToken){
       console.log("Inside getSessionAndUser");
-      let data = await AuthUser.find({
-        [GSI1PK]: `SESSION#${sessionToken}`,
-        [GSI1SK]: `SESSION#${sessionToken}`
+      let data = await Session.find({
+        sessionToken: sessionToken
       }).go();
       data = data['data'];
-      console.log("received data, ", data[0]);
+      console.log("received data, ", data);
       if(!data.length) return null;
       const session = data[0];
-      const user = await AuthUser.find({
-        [pk]: `USER#${session.userId}`,
-        [sk]: `USER#${session.userId}`
+      session['expires'] = new Date(session['expires']);
+      console.log("using session, ", session);
+      let user = await User.find({
+        id: session.userId
       }).go();
+      user = user['data'];
       console.log("received user: ", user);
       if(!user.length) return null;
+      user = user[0]
       return { user, session}
     },
     async createSession(data){
@@ -226,51 +357,48 @@ export function ElectroDBAdapter(
         id: crypto.randomUUID(),
         ...data 
       }
+      // replace date
+
+      session['expires'] = session['expires'].toISOString();
       console.log(session);
-      await AuthUser.create({
-        [pk]: `USER#${data.userId}`,
-        [sk]: `SESSION#${data.sessionToken}`,
-        [GSI1PK]: `SESSION#${data.sessionToken}`,
-        [GSI1SK]: `SESSION#${data.sessionToken}`,
-        type: "SESSION",
-        ...data
+      await Session.create({
+        ...session,
+        type: "SESSION"
       }).go();
+      session['expires'] = new Date(session['expires']);
       return session; 
     },
     async updateSession(session){
       console.log("Inside updateSession");
       const {sessionToken} = session;
-      const data = await AuthUser.get({
-        GSI1PK: `SESSION#${sessionToken}`,
-        GSI1SK: `SESSION#${sessionToken}`
+      const data = await Session.find({
+        sessionToken: sessionToken
       }).go();
-      const [pk, sk] = data[0];
-      return await AuthUser.update({
-        [pk]: pk,
-        [sk]: sk
+      const {userId} = data[0];
+      let newSession = await Session.update({
+        userId: userId
       }).set(
         ...session
       ).go();
+      return newSession['data'];
     },
     async deleteSession(sessionToken){
       console.log("Inside deleteSession");
-      const data = AuthUser.get({
-        GSI1PK: `SESSION#${sessionToken}`,
-        GSI1SK: `SESSION#${sessionToken}`
+      const data = Session.get({
+        sessionToken: sessionToken
       }).go();
       if(!data) return null;
-      const [pk, sk] = data[0];
-      const res=await AuthUser.delete({
-        [pk]: pk,
-        [sk]: sk
+      const {userId} = data[0];
+      const res=await Session.delete({
+        userId: userId
       }).go();
-      return res;
+      return res['data'];
     },
     async createVerificationToken(data){
       console.log("Inside createVerificationToken");
-      await AuthUser.create({
-        [pk]: `VT#${data.identifier}`,
-        [sk]: `VT#${data.token}`,
+      await VerificationToken.create({
+        identifier: data.identifier,
+        token: data.token,
         type: "VT",
         ...data
       }).go();
@@ -278,11 +406,11 @@ export function ElectroDBAdapter(
     },
     async useVerificationToken({identifier, token}){
       console.log("Inside useVerificationToken")
-      const data = await AuthUser.delete({
-        [pk]: `VT#${identifier}`,
-        [sk]: `VT#${token}`
+      const data = await VerificationToken.delete({
+        identifier: identifier,
+        token: token
       }).go();
-      return data;
+      return data['data'];
     }
   }
 }
