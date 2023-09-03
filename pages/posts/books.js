@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { Entity } from 'electrodb';
 import aws from "aws-sdk";
-
+import { ElectroDBAdapter } from "../../database/electroDBClient";
 
 // aws.config.loadFromPath('/Users/shashikumar/Projects/next-auth/awsconfig.json')
 aws.config.update({
@@ -11,102 +11,185 @@ aws.config.update({
 
 const client = new aws.DynamoDB.DocumentClient({region:"us-east-1"});
 
-// highlight-next-line
-const table = 'next-auth';
-
-const Book = new Entity({
-  model: {
-    entity: 'book',
-    version: '1',
-    service: 'store'
-  },
-  attributes: {
-    id: {
-      type: 'string',
+const table = "next-auth"
+const User = new Entity({
+    model: {
+      service: "USER",
+      entity: "USER",
+      version: "1"
     },
-    bookId: {
-      type: 'string',
-    },
-    price: {
-      type: 'number',
-      required: true,
-    },
-    title: {
-      type: 'string',
-    },
-    author: {
-      type: 'string',
-    },
-    condition: {
-      type: ['EXCELLENT', 'GOOD', 'FAIR', 'POOR'],
-      required: true,
-    },
-    genre: {
-      type: 'set',
-      items: 'string',
-    },
-    published: {
-      type: 'string',
-    }
-  },
-  indexes: {
-    byLocation: {
-      pk: {
-        // highlight-next-line
-        field: 'pk',
-        composite: ['id']
+    attributes: {
+      id: {
+        type:"string"
       },
-      sk: {
-        // highlight-next-line
-        field: 'sk',
-        composite: ['bookId']
+      email: {
+        type: "string"
+      },
+      emailVerified: {
+        type: "string"
       }
     },
-    byAuthor: {
-      // highlight-next-line
-      index: 'gsi1pk-gsi1sk-index',
-      pk: {
-        // highlight-next-line
-        field: 'gsi1pk',
-        composite: ['author']
+    indexes: {
+      byUser:{
+        pk: {
+          field: "pk",
+          composite: ["id"]
+        },
+        sk: {
+            field: "sk",
+            composite: ["id"]
+        }
       },
-      sk: {
-        // highlight-next-line
-        field: 'gsi1sk',
-        composite: ['title']
+      byEmail:{
+        index: "gsi1pk-gsi1sk-index",
+        pk: {
+            field: "gsi1pk",
+            composite: ["email"]
+        },
+        sk: {
+            field: "gsi1sk",
+            composite: ["email"]
+        }
       }
     }
-  }
-  // add your DocumentClient and TableName as a second parameter
-}, {client, table});
+  }, {client, table});
 
-
-var params = {
-    TableName: 'electro',
-    Item: {
-      'storeId' : {S: '001'},
-      'bookId': {S:'001'},
-      'bookName' : {S: 'Richard Roe'}
+  const Session = new Entity({
+    model:{
+      service: "USER",
+      entity: "SESSION",
+      version: "1"
+    },
+    attributes:{
+      id: {
+        type: "string"
+      },
+      sessionToken: {
+        type: "string"
+      },
+      userId: {
+        type: "string"
+      }
+    },
+    indexes:{
+      byToken: {
+        pk:{
+          field: "pk",
+          composite: ["userId"]
+        },
+        sk: {
+          field: "sk",
+          composite: ["sessionToken"]
+        }
+      },
+      bySession:{
+        index: "gsi1pk-gsi1sk-index",
+        pk: {
+            field: "gsi1pk",
+            composite: ["sessionToken"]
+        },
+        sk: {
+            field: "gsi1sk",
+            composite: ["sessionToken"]
+        }
+      }
     }
-  };
-  
+  }, {client, table});
+
+  const Account = new Entity({
+    model: {
+      service: "USER", 
+      entity: "ACCOUNT",
+      version: "1"
+    },
+    attributes:{
+      id: {
+        type: "string"
+      },
+      providerId: {
+        type: "string"
+      },
+      providerAccountId: {
+        type: "string"
+      },
+      userId: {
+        type: "string"
+      }
+    }, 
+    indexes: {
+      byAccount: {
+        pk: {
+          field: "pk",
+          composite: ["userId"]
+        },
+        sk: {
+          field: "sk",
+          composite: ["providerId", "providerAccountId"]
+        }
+      },
+      byProvider: {
+        index: "gsi1pk-gsi1sk-index",
+        pk: {
+            field: "gsi1pk",
+            composite: ["providerId"]
+        },
+        sk: {
+            field: "gsi1sk",
+            composite: ["providerAccountId"]
+        }
+      }
+    }
+  }, {client, table});
+
+  const VerificationToken = new Entity({
+    model: {
+      service: "VT", 
+      entity: "VT",
+      version: "1"
+    },
+    attributes:{
+      identifier: {
+        type: "string"
+      },
+      token: {
+        type: "string"
+      },
+      type: {
+        type: "string"
+      }
+    }, 
+    indexes: {
+      byIdentifier: {
+        pk: {
+          field: "pk",
+          composite: ["identifier"]
+        },
+        sk: {
+          field: "sk",
+          composite: ["token"]
+        }
+      }
+    }
+  }, {client, table});
+
+
 export default function Books(){
-    useEffect(()=>{
-        // Book.create({
-        //     bookId: 'beedabe8-e34e-4d41-9272-0755be9a2a9f',
-        //     id: 'pdx-46',
-        //     author: 'Stephen King',
-        //     title: 'IT',
-        //     condition: 'GOOD',
-        //     price: 15,
-        //     genre: ['HORROR', 'THRILLER'],
-        //     published: '1986-09-15',
-        //   }).go();
-        // const book = Book.query.byLocation({
-        //     id: 'pdx-45',
-        //     bookId: 'beedabe8-e34e-4d41-9272-0755be9a2a9f'
+    useEffect(async()=>{
+        const user = {
+            id: crypto.randomUUID(),
+            email: "shashi4bs@gmail.com",
+            emailVerified: "false"
+        }
+        // User.create({
+        //     ...user,
+        //     type: "USER",
+        //     "GSI1PK" : `USER#${user.email}`,
+        //     "GSI1SK" : `USER#${user.email}`
         // }).go();
-        // console.log(book);
+        const user1 = await User.get({
+            id: "7d84f905-6f98-4815-88b2-7cb3073434b3"
+        }).go();
+        console.log(user1);
     }, []);
     return <>
         <h2>This is a book store</h2>
