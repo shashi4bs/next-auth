@@ -4,6 +4,7 @@ import {MongoDBAdapter} from "@auth/mongodb-adapter";
 import {ElectroDBAdapter} from "../../../database/electroDBClient";
 import connection from "../../../database/mongoClient";
 import aws from "aws-sdk";
+import { DynamoDBAdapter } from "@auth/dynamodb-adapter";
 
 aws.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY,

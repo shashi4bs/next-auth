@@ -76,6 +76,15 @@ export function ElectroDBAdapter(
       },
       emailVerified: {
         type: "string"
+      },
+      name: {
+        type: "string"
+      },
+      image: {
+        type: "string"
+      },
+      state:{
+        type: "string"
       }
     },
     indexes: {
@@ -171,6 +180,15 @@ export function ElectroDBAdapter(
         type: "string"
       },
       userId: {
+        type: "string"
+      },
+      access_token:{
+        type: "string"
+      },
+      token_type:{
+        type: "string"
+      },
+      scope:{
         type: "string"
       }
     }, 
@@ -268,6 +286,9 @@ export function ElectroDBAdapter(
       data = data['data']
       console.log("read data: ", data);
       if(!data.length) return null;
+      if(data[0]['emailVerified'] == 'null'){
+        data[0]['emailVerified'] = null;
+      }
       return data[0];
     },
     async getUserByAccount({provider, providerAccountId}) {
@@ -284,8 +305,12 @@ export function ElectroDBAdapter(
       const res = await User.get({
         id: account.userId
       }).go();
-      if(!res.data.length) return null;
-      return res.data[0];
+      console.log("received user: ", res);
+      if(!res.data) return null;
+      if(data['emailVerified'] == 'null'){
+        data['emailVerified'] = null;
+      }
+      return res.data;
     },
     async updateUser(user){
       console.log("Inside updateUser");
@@ -384,13 +409,16 @@ export function ElectroDBAdapter(
     },
     async deleteSession(sessionToken){
       console.log("Inside deleteSession");
-      const data = Session.get({
+      let data = await Session.find({
         sessionToken: sessionToken
       }).go();
+      console.log("received data: ", data);
+      data = data['data'];
       if(!data) return null;
       const {userId} = data[0];
       const res=await Session.delete({
-        userId: userId
+        userId: userId,
+        sessionToken: sessionToken
       }).go();
       return res['data'];
     },
